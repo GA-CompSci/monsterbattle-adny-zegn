@@ -5,9 +5,13 @@ public class Monster {
     private double damage;
     private int speed;
     private String special; 
+    private String name;
+
+    private String[] adjectives = {"Evil ", "Devious ", "Killer ", "Giant ", "Angry ", "Ferocious ", "Malevolent "};
+    private String[] species = {"Starfish", "Clam", "Jellyfish ", "Sea Pickle ", "Kelp", "Coral", "Sea Urchin", "Shrimp"};
 
     // CONSTRUCTOR
-    public Monster(){
+    public Monster() {
         // randomly generate health, damage, speed
         health = (int)(Math.random() * 80 + 1) + 20;
         // random 10 - 50
@@ -16,7 +20,9 @@ public class Monster {
         speed = (int)(Math.random() * 10) + 1;
         // by default, the monster doesn't have a special move
         special = "";
+        name = adjectives[(int)(Math.random() * adjectives.length)] + species[(int)(Math.random() * species.length)];
     }
+
     // OVERLOADED CONSTRUCTOR
     public Monster(String special){
         this();
@@ -28,6 +34,7 @@ public class Monster {
     public double damage() { return Math.round(damage * 100.0) / 100.0; }
     public int speed() { return speed; }
     public String special() { return this.special; }
+    public String name() { return this.name; }
 
     // MUTATOR METHODS
     public void takeDamage(int dmg){

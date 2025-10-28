@@ -58,7 +58,13 @@ public class Game {
         // CHOOSE DIFFICULTY 
         int numMonsters = chooseDifficulty();
         monsters = new ArrayList<>();
-        for (int i = 0; i < numMonsters; i++) monsters.add(new Monster());
+        for (int i = 0; i < numMonsters; i++) {
+            if (i == 0) {
+                monsters.add(new Monster("Giant Squid"));
+            } else {
+                monsters.add(new Monster());
+            }
+        }
         gui.updateMonsters(monsters);
         
         pickCharacterBuild();
@@ -69,7 +75,10 @@ public class Game {
         gui.updateInventory(inventory);
         
         // TODO: Customize button labels
-        String[] buttons = {"Attack", "Defend", "Heal", "Use Item"};
+        String[] buttons = {"Attack (" + playerDamage + ")", 
+                            "Defend (" + playerShield + ")", 
+                            "Heal (" + playerHeal +")", 
+                            "Use Item"};
         gui.setActionButtons(buttons);
         
         // Welcome message
@@ -185,6 +194,7 @@ public class Game {
         int choice = gui.waitForAction();
         
         // Initialize default stats
+        playerHealth = 100;
         playerDamage = 50;
         playerShield = 50;
         playerHeal = 50;
@@ -210,7 +220,7 @@ public class Game {
             // Ninja: high speed, low healing and health
             gui.displayMessage("You chose Dolphin Rider! Quick and to the point.");
             playerHeal -= (int)(Math.random() * 21) + 5;        // Reduce heal by 5-25
-            playerHealth -= (int)(Math.random() * 21) + 5;         // Reduce max health by 5-25
+            playerHealth -= (int)(Math.random() * 21) + 5;      // Reduce max health by 5-25
         }
         
         // Pause to let player see their choice
@@ -228,8 +238,25 @@ public class Game {
     private void attackMonster() {
         // TODO: Implement your attack!
         // Hint: Look at GameDemo.java for an example
-        
-        gui.displayMessage("TODO: Implement attack!");
+        Monster target = getRandomLivingMonster();
+        int damage = (int)(Math.random() * (playerDamage + 1));
+        if (damage == 0) {
+            // Critical miss - hurt yourself
+            playerHealth -= 5;
+            gui.displayMessage("A swing and a MISS! You hit yourself for 5 hp!");
+            gui.updatePlayerHealth(damage);
+        } else if (damage ==  playerDamage) {
+            gui.displayMessage("A critical hit! The monster was so intimidated it died on the spot!");
+            target.takeDamage(target.health());
+        } else {
+            target.takeDamage(damage);
+        }
+        // Show which one we hit
+        int index = monsters.indexOf(target);
+        gui.highlightMonster(index);
+        gui.pause(300);
+        gui.highlightMonster(-1);
+        gui.updateMonsters(monsters);
     }
     
     /**
@@ -315,6 +342,34 @@ public class Game {
         return alive.get((int)(Math.random() * alive.size()));
     }
     
+    /**
+     * Finds all special monsters.
+     * @return An ArrayList of Monsters with specials
+     */
+    private ArrayList<Monster> getSpecialMonsters() {
+        ArrayList<Monster> elites = new ArrayList<Monster>();
+        for (Monster monster : monsters) {
+            if (monster.special() != null && !monster.special().equals("") && monster.health() > 0) {
+                elites.add(monster);
+            }
+        }
+        return elites;
+    }
+
+    /**
+     * Finds all monsters with speed greater than the player's.
+     * @return An ArrayList of Monsters meeting the above condition.
+     */
+    private ArrayList<Monster> getSpeedyMonsters() {
+        ArrayList<Monster> result = new ArrayList<Monster>();
+        for (Monster monster : monsters) {
+            if (monster.speed() > playerSpeed && monster.health() > 0) {
+                result.add(monster);
+            }
+        }
+        return result;
+    }
+
     // TODO: Add more helper methods as you need them!
     // Examples:
     // - Method to find the strongest monster
