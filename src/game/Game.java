@@ -23,12 +23,14 @@ public class Game {
     
     // Game state - YOU manage these
     private ArrayList<Monster> monsters;
+    private Monster lastHit; // The monster we last attacked - retaliates if not dead
     private ArrayList<Item> inventory;
     private int playerHealth;
     private int playerShield;
     private int playerDamage;
     private int playerHeal;
     private int playerSpeed;
+    private boolean shieldUp;
 
     /**
      * Main method - start YOUR game!
@@ -150,7 +152,7 @@ public class Game {
                 break;
         }
         
-        gui.displayMessage("Difficulty selected. You shall face " + difficulties[choice] + " monsters! Good luck.");
+        gui.displayMessage("Difficulty selected. You shall face " + numMonsters + " monsters! Good luck.");
         gui.pause(1500);
         
         return numMonsters;
@@ -236,15 +238,17 @@ public class Game {
      * - Special effects?
      */
     private void attackMonster() {
-        // TODO: Implement your attack!
+        // TODO: Implement more intelligent targeting
         // Hint: Look at GameDemo.java for an example
         Monster target = getRandomLivingMonster();
+        lastHit = target;
         int damage = (int)(Math.random() * (playerDamage + 1));
+
         if (damage == 0) {
             // Critical miss - hurt yourself
             playerHealth -= 5;
             gui.displayMessage("A swing and a MISS! You hit yourself for 5 hp!");
-            gui.updatePlayerHealth(damage);
+            gui.updatePlayerHealth(playerHealth);
         } else if (damage ==  playerDamage) {
             gui.displayMessage("A critical hit! The monster was so intimidated it died on the spot!");
             target.takeDamage(target.health());
@@ -268,9 +272,9 @@ public class Game {
      * - Something else?
      */
     private void defend() {
-        // TODO: Implement your defend!
+        shieldUp = true;
         
-        gui.displayMessage("TODO: Implement defend!");
+        gui.displayMessage("Shield Up! Ready or not...");
     }
     
     /**
@@ -310,10 +314,25 @@ public class Game {
      * - Special abilities?
      */
     private void monsterAttack() {
-        // TODO: Implement monster attacks!
-        // Hint: Look at GameDemo.java for an example
-        
-        gui.displayMessage("TODO: Implement monster attack!");
+        // Create new ArrayList of monsters that will attack the player
+        ArrayList<Monster> attackers = getSpeedyMonsters();
+        if (lastHit.health() > 0 && !attackers.contains(lastHit)) attackers.add(lastHit);
+
+        for (Monster monster : monsters) {
+            int damageTaken = (int)(Math.random() * monster.damage() + 1);
+            // TODO: Fix shield logic
+            if (shieldUp) {
+                damageTaken -= playerShield;
+            }
+            if (damageTaken > 0) {
+                gui.displayMessage(monster.name() + " hits you for " + damageTaken + " damage!");
+            }
+
+            int index = monsters.indexOf(monster);
+            gui.highlightMonster(index);
+            gui.pause(300);
+            gui.highlightMonster(-1);
+        }
     }
     
     // ==================== HELPER METHODS ====================
