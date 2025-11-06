@@ -30,7 +30,7 @@ public class Game {
     private int playerDamage;
     private int playerHeal;
     private int playerSpeed;
-    private boolean shieldUp;
+    private double shieldPoints;
 
     /**
      * Main method - start YOUR game!
@@ -208,21 +208,24 @@ public class Game {
             gui.displayMessage("You chose Fish Slapper! Slap 'em up, but be careful...");
             playerShield -= (int)(Math.random() * 21) + 5;      // Reduce shield by 5-25
             playerHeal -= (int)(Math.random() * 21) + 5;        // Reduce heal by 5-25
+            playerSpeed = (int)(Math.random() * 6) + 5;         // Set speed to a range of 5-10
         } else if (choice == 1) {
             // Tank: high shield, low damage and speed
             gui.displayMessage("You chose Turtle Master! Slow and steady, can you win?");
-            playerSpeed -= (int)(Math.random() * 9) + 1;        // Reduce speed by 1-9
+            playerSpeed = (int)(Math.random() * 5) + 1;         // Set speed to a range of 1-5
             playerDamage -= (int)(Math.random() * 21) + 5;      // Reduce damage by 5-25
         } else if (choice == 2) {
             // Healer: high healing, low damage and shield
             gui.displayMessage("You chose Algae Eater! Photosynthesize and devour your way to the top!");
             playerDamage -= (int)(Math.random() * 21) + 5;      // Reduce damage by 5-25
             playerShield -= (int)(Math.random() * 21) + 5;      // Reduce shield by 5-25
+            playerSpeed = (int)(Math.random() * 5) + 1;         // Set speed to a range of 3-8
         } else {
             // Ninja: high speed, low healing and health
             gui.displayMessage("You chose Dolphin Rider! Quick and to the point.");
             playerHeal -= (int)(Math.random() * 21) + 5;        // Reduce heal by 5-25
             playerHealth -= (int)(Math.random() * 21) + 5;      // Reduce max health by 5-25
+            playerSpeed = (int)(Math.random() * 4) + 8;         // Set speed to a range of 7-11
         }
         
         // Pause to let player see their choice
@@ -264,15 +267,10 @@ public class Game {
     }
     
     /**
-     * Defend
-     * 
-     * TODO: What does defending do?
-     * - Reduce damage?
-     * - Block next attack?
-     * - Something else?
+     * Put up a shield that reduces damage
      */
     private void defend() {
-        shieldUp = true;
+        shieldPoints = playerShield;
         
         gui.displayMessage("Shield Up! Ready or not...");
     }
@@ -280,14 +278,11 @@ public class Game {
     /**
      * Heal yourself
      * 
-     * TODO: How does healing work?
-     * - How much HP?
-     * - Any limits?
      */
     private void heal() {
-        // TODO: Implement your heal!
-        
-        gui.displayMessage("TODO: Implement heal!");
+        playerHealth += playerHeal;
+        gui.updatePlayerHealth(playerHealth);
+        gui.displayMessage("You healed " + playerHeal + " hp.");
     }
     
     /**
@@ -316,16 +311,22 @@ public class Game {
     private void monsterAttack() {
         // Create new ArrayList of monsters that will attack the player
         ArrayList<Monster> attackers = getSpeedyMonsters();
-        if (lastHit.health() > 0 && !attackers.contains(lastHit)) attackers.add(lastHit);
+        if (lastHit != null && lastHit.health() > 0 && !attackers.contains(lastHit)) attackers.add(lastHit);
 
-        for (Monster monster : monsters) {
+        for (Monster monster : attackers) {
+            // shoudn't the monster's damage dealt logic be handle in the Monster class? 
             int damageTaken = (int)(Math.random() * monster.damage() + 1);
-            // TODO: Fix shield logic
-            if (shieldUp) {
-                damageTaken -= playerShield;
+            if (shieldPoints > 0) {
+                double absorbance = Math.min(damageTaken, shieldPoints);
+                damageTaken -= absorbance;
+                shieldPoints -= absorbance;
+                gui.displayMessage("You block for " + absorbance + " damage. You have " + shieldPoints + " shield left.");
+
             }
             if (damageTaken > 0) {
+                playerHealth -= damageTaken;
                 gui.displayMessage(monster.name() + " hits you for " + damageTaken + " damage!");
+                gui.updatePlayerHealth(playerHealth);
             }
 
             int index = monsters.indexOf(monster);
