@@ -31,6 +31,8 @@ public class Game {
     private int playerHeal;
     private int playerSpeed;
     private double shieldPoints;
+    private String playerStatus
+    ;
 
     /**
      * Main method - start YOUR game!
@@ -62,7 +64,7 @@ public class Game {
         monsters = new ArrayList<>();
         for (int i = 0; i < numMonsters; i++) {
             if (i == 0) {
-                monsters.add(new Monster("Giant Squid"));
+                monsters.add(new Monster("Kraken", "Immobilizer"));
             } else {
                 monsters.add(new Monster());
             }
@@ -234,16 +236,12 @@ public class Game {
    
     /**
      * Attack a monster
-     * 
-     * TODO: How does attacking work in your game?
-     * - How much damage?
-     * - Which monster gets hit?
-     * - Special effects?
      */
     private void attackMonster() {
         // TODO: Implement more intelligent targeting
-        // Hint: Look at GameDemo.java for an example
-        Monster target = getRandomLivingMonster();
+
+
+        Monster target = getFirstLivingMonster();
         lastHit = target;
         int damage = (int)(Math.random() * (playerDamage + 1));
 
@@ -314,21 +312,29 @@ public class Game {
         if (lastHit != null && lastHit.health() > 0 && !attackers.contains(lastHit)) attackers.add(lastHit);
 
         for (Monster monster : attackers) {
-            // shoudn't the monster's damage dealt logic be handle in the Monster class? 
+
             int damageTaken = (int)(Math.random() * monster.damage() + 1);
             if (shieldPoints > 0) {
                 double absorbance = Math.min(damageTaken, shieldPoints);
                 damageTaken -= absorbance;
                 shieldPoints -= absorbance;
                 gui.displayMessage("You block for " + absorbance + " damage. You have " + shieldPoints + " shield left.");
-
             }
+
             if (damageTaken > 0) {
                 playerHealth -= damageTaken;
                 gui.displayMessage(monster.name() + " hits you for " + damageTaken + " damage!");
                 gui.updatePlayerHealth(playerHealth);
             }
-
+            
+            switch (monster.special()) {
+                case ("Immobilizer"): 
+                    playerStatus = "Immobilized";
+                    gui.displayMessage(monster.name() + " immobilizes you! 30% chance for actions to fail!");
+                    break;
+                default:
+                    break;
+            }
             int index = monsters.indexOf(monster);
             gui.highlightMonster(index);
             gui.pause(300);
@@ -361,6 +367,17 @@ public class Game {
         if (alive.isEmpty()) return null;
         return alive.get((int)(Math.random() * alive.size()));
     }
+
+    /**
+     * 
+     * @return The first monster still living.
+     */
+    private Monster getFirstLivingMonster() {
+        for (int i = 0; i < monsters.size(); i++) {
+            if (monsters.get(i).health() > 0) return monsters.get(i);
+        }
+        return null;
+    }
     
     /**
      * Finds all special monsters.
@@ -369,7 +386,7 @@ public class Game {
     private ArrayList<Monster> getSpecialMonsters() {
         ArrayList<Monster> elites = new ArrayList<Monster>();
         for (Monster monster : monsters) {
-            if (monster.special() != null && !monster.special().equals("") && monster.health() > 0) {
+            if (monster.special() != null && monster.special() != "" && monster.health() > 0) {
                 elites.add(monster);
             }
         }
