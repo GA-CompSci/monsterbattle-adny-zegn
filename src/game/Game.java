@@ -97,6 +97,7 @@ public class Game {
      */
     private void gameLoop() {
         // Keep playing while monsters alive and player alive
+        
         while (countLivingMonsters() > 0 && playerHealth > 0) {
             
             // PLAYER'S TURN
@@ -238,8 +239,6 @@ public class Game {
      * Attack a monster
      */
     private void attackMonster() {
-        // TODO: Implement more intelligent targeting
-
 
         Monster target = getFirstLivingMonster();
         lastHit = target;
@@ -269,7 +268,6 @@ public class Game {
      */
     private void defend() {
         shieldPoints = playerShield;
-        
         gui.displayMessage("Shield Up! Ready or not...");
     }
     
@@ -314,6 +312,14 @@ public class Game {
         for (Monster monster : attackers) {
 
             int damageTaken = (int)(Math.random() * monster.damage() + 1);
+            
+
+            if (monster.special().equals("Immobilizer")) {
+                playerStatus = "Immobilized";
+                gui.displayMessage(monster.name() + " immobilizes you! 30% chance for actions to fail!");
+            }
+            
+            // MANAGE SHIELD
             if (shieldPoints > 0) {
                 double absorbance = Math.min(damageTaken, shieldPoints);
                 damageTaken -= absorbance;
@@ -327,14 +333,6 @@ public class Game {
                 gui.updatePlayerHealth(playerHealth);
             }
             
-            switch (monster.special()) {
-                case ("Immobilizer"): 
-                    playerStatus = "Immobilized";
-                    gui.displayMessage(monster.name() + " immobilizes you! 30% chance for actions to fail!");
-                    break;
-                default:
-                    break;
-            }
             int index = monsters.indexOf(monster);
             gui.highlightMonster(index);
             gui.pause(300);

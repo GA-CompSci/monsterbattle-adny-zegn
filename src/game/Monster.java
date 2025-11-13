@@ -29,6 +29,7 @@ public class Monster {
         this();
         this.name = eliteName;
         this.special = special;
+        
     }
     
     // ACCESSOR METHODS

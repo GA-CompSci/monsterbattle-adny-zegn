@@ -149,7 +149,7 @@ public class MonsterBattleGUI extends JFrame {
     public int waitForAction() {
         selectedAction = -1;
         waitingForInput = true;
-        
+
         SwingUtilities.invokeLater(() -> buttonPanel.setEnabled(true));
         
         synchronized(actionLock) {
