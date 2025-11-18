@@ -197,8 +197,8 @@ public class MonsterDisplayPanel extends JPanel {
                 int width = getWidth();
                 int height = getHeight();
                 
-                // Calculate health percentage (assume max 100)
-                double healthPercent = Math.max(0, Math.min(100, monster.health())) / 100.0;
+                // Calculate health percentage 
+                double healthPercent = Math.max(0, monster.health() / (double) monster.maxHealth());
                 int barWidth = (int) (width * healthPercent);
                 
                 // Choose color based on health

@@ -26,13 +26,13 @@ public class Game {
     private Monster lastHit; // The monster we last attacked - retaliates if not dead
     private ArrayList<Item> inventory;
     private int playerHealth;
+    private int playerMaxHealth;
     private int playerShield;
     private int playerDamage;
     private int playerHeal;
     private int playerSpeed;
     private double shieldPoints;
-    private String playerStatus
-    ;
+    private String playerStatus = "Normal";
 
     /**
      * Main method - start YOUR game!
@@ -59,12 +59,17 @@ public class Game {
         // Create the GUI
         gui = new MonsterBattleGUI("Monster Battle - ANDY'S GAME");
 
+        String[] specials = {"Immobilizer",
+                             "Colossus",
+                             "Predator"};
         // CHOOSE DIFFICULTY 
         int numMonsters = chooseDifficulty();
         monsters = new ArrayList<>();
         for (int i = 0; i < numMonsters; i++) {
             if (i == 0) {
-                monsters.add(new Monster("Kraken", "Immobilizer"));
+                // ADD AN ELITE MONSTER
+                int eliteIndex = (int)(Math.random() * specials.length);
+                monsters.add(new Monster(specials[eliteIndex]));
             } else {
                 monsters.add(new Monster());
             }
@@ -101,11 +106,21 @@ public class Game {
         while (countLivingMonsters() > 0 && playerHealth > 0) {
             
             // PLAYER'S TURN
-            gui.displayMessage("Your turn! HP: " + playerHealth);
-            int action = gui.waitForAction();  // Wait for button click (0-3)
-            handlePlayerAction(action);
-            gui.updateMonsters(monsters);
-            gui.pause(500);
+            if (playerStatus != null && !(playerStatus.equals("Immobilized") && Math.random() < 0.3)) {
+                gui.displayMessage("Your turn! HP: " + playerHealth);
+                int action = gui.waitForAction();  // Wait for button click (0-3)
+                handlePlayerAction(action);
+                gui.updateMonsters(monsters);
+                gui.pause(500);
+            } else {
+                gui.displayMessage(monsters.get(0).name() + " immobilizes you! You cannot move!");
+                gui.pause(1500);
+            }
+
+            if (playerStatus != null && playerStatus.equals("Bleeding")) {
+                heal(-0.05); // "heal" negative percentage points
+                gui.displayMessage("You are bleeding! you took"); 
+            }
             
             // MONSTER'S TURN (if any alive and player alive)
             if (countLivingMonsters() > 0 && playerHealth > 0) {
@@ -123,10 +138,10 @@ public class Game {
         }
     }
     
-        /**
-     * Let player choose difficulty (number of monsters) using the 4 buttons
-     * This demonstrates using the GUI for menu choices!
-     */
+    /**
+    * Let player choose difficulty (number of monsters) using the 4 buttons
+    * This demonstrates using the GUI for menu choices!
+    */
     private int chooseDifficulty() {
         // Set button labels to difficulty levels
         String[] difficulties = {"Easy (2-4)", "Medium (4-6)", "Hard (6-10)", "Extreme (10-15)"};
@@ -164,7 +179,6 @@ public class Game {
     /**
      * Handle player's action choice
      * 
-     * TODO: What happens for each action?
      */
     private void handlePlayerAction(int action) {
         switch (action) {
@@ -249,7 +263,8 @@ public class Game {
             playerHealth -= 5;
             gui.displayMessage("A swing and a MISS! You hit yourself for 5 hp!");
             gui.updatePlayerHealth(playerHealth);
-        } else if (damage ==  playerDamage) {
+        } else if (damage >=  playerDamage) {
+            // Critical Success
             gui.displayMessage("A critical hit! The monster was so intimidated it died on the spot!");
             target.takeDamage(target.health());
         } else {
@@ -312,13 +327,7 @@ public class Game {
         for (Monster monster : attackers) {
 
             int damageTaken = (int)(Math.random() * monster.damage() + 1);
-            
 
-            if (monster.special().equals("Immobilizer")) {
-                playerStatus = "Immobilized";
-                gui.displayMessage(monster.name() + " immobilizes you! 30% chance for actions to fail!");
-            }
-            
             // MANAGE SHIELD
             if (shieldPoints > 0) {
                 double absorbance = Math.min(damageTaken, shieldPoints);
@@ -331,6 +340,22 @@ public class Game {
                 playerHealth -= damageTaken;
                 gui.displayMessage(monster.name() + " hits you for " + damageTaken + " damage!");
                 gui.updatePlayerHealth(playerHealth);
+            }
+
+            if (monster.special().equals("Immobilizer") && playerStatus != "Immobilized" && damageTaken > 0) {
+                playerStatus = "Immobilized";
+                gui.displayMessage(monster.name() + " immobilizes you! 30% chance for actions to fail!");
+                gui.pause(1000);
+            } else if (monster.special().equals("Colossus")) {
+                if (Math.random() < 0.3) {
+                    gui.displayMessage(monster.name() + " heals itself for 5% of its health!");
+                    monster.heal(0.05);
+                    gui.pause(500);
+                }
+            } else if (monster.special().equals("Predator") && playerStatus != "Bleeding" && damageTaken > 0) {
+                playerStatus = "Bleeding";
+                gui.displayMessage(monster.name() + " cuts you deeply! You will take 5% of your max health every turn!");
+                gui.pause(500);
             }
             
             int index = monsters.indexOf(monster);
@@ -405,10 +430,12 @@ public class Game {
         return result;
     }
 
-    // TODO: Add more helper methods as you need them!
-    // Examples:
-    // - Method to find the strongest monster
-    // - Method to check if player has a specific item
-    // - Method to add special effects
-    // - etc.
+    public void heal(int amountHealed) {
+        playerHealth = Math.max(playerMaxHealth, playerHealth + amountHealed);
+    }
+
+    public void heal(double percent) {
+        int amountHealed = (int)(percent * playerMaxHealth);
+        playerHealth = Math.max(playerMaxHealth, playerHealth + amountHealed);
+    }
 }
