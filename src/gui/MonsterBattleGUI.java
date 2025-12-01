@@ -17,6 +17,7 @@ import java.util.ArrayList;
  * STUDENT API METHODS:
  * - updateMonsters(ArrayList<Monster>) - Show current monsters
  * - updatePlayerHealth(int) - Show player health
+ * - setPlayerSpeed(int) - Set player speed stat
  * - updateInventory(ArrayList<Item>) - Show items
  * - displayMessage(String) - Show a message
  * - setActionButtons(String[]) - Label the 4 buttons
@@ -46,7 +47,7 @@ public class MonsterBattleGUI extends JFrame {
         initializeComponents();
         layoutComponents();
         
-        setSize(1000, 750);
+        setSize(1000, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -61,7 +62,7 @@ public class MonsterBattleGUI extends JFrame {
         buttonPanel = new ActionButtonPanel(e -> handleButtonClick(e));
         inventoryPanel = new InventoryPanel();
         messagePanel = new MessagePanel();
-        playerStatusPanel = new PlayerStatusPanel(100);
+        playerStatusPanel = new PlayerStatusPanel();
     }
     
     /**
@@ -115,6 +116,14 @@ public class MonsterBattleGUI extends JFrame {
     }
     
     /**
+     * Set player's speed stat
+     * @param speed The speed value
+     */
+    public void setPlayerSpeed(int speed) {
+        SwingUtilities.invokeLater(() -> playerStatusPanel.setSpeed(speed));
+    }
+    
+    /**
      * Update the inventory display
      * @param items Your list of items
      */
@@ -149,7 +158,7 @@ public class MonsterBattleGUI extends JFrame {
     public int waitForAction() {
         selectedAction = -1;
         waitingForInput = true;
-
+        
         SwingUtilities.invokeLater(() -> buttonPanel.setEnabled(true));
         
         synchronized(actionLock) {

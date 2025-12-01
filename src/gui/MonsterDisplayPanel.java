@@ -129,7 +129,7 @@ public class MonsterDisplayPanel extends JPanel {
             infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
             infoPanel.setOpaque(false);
             
-            // Monster number/name
+            // Monster name
             JLabel numberLabel = new JLabel(monster.name());
             numberLabel.setFont(new Font("Arial", Font.BOLD, 14));
             numberLabel.setForeground(Color.WHITE);

@@ -20,7 +20,7 @@ public class Game {
     
     // The GUI (I had AI build most of this)
     private MonsterBattleGUI gui;
-    
+
     // Game state - YOU manage these
     private ArrayList<Monster> monsters;
     private Monster lastHit; // The monster we last attacked - retaliates if not dead
@@ -31,6 +31,8 @@ public class Game {
     private int playerDamage;
     private int playerHeal;
     private int playerSpeed;
+    private int playerSpecialMeter;
+    private int playerSpecialMax;
     private double shieldPoints;
     private String playerStatus = "Normal";
 
@@ -62,11 +64,13 @@ public class Game {
         String[] specials = {"Immobilizer",
                              "Colossus",
                              "Predator"};
+
         // CHOOSE DIFFICULTY 
         int numMonsters = chooseDifficulty();
+        int elitePosition = (int)(Math.random() * numMonsters); // Randomly generate the position our elite will be
         monsters = new ArrayList<>();
         for (int i = 0; i < numMonsters; i++) {
-            if (i == 0) {
+            if (i == elitePosition) {
                 // ADD AN ELITE MONSTER
                 int eliteIndex = (int)(Math.random() * specials.length);
                 monsters.add(new Monster(specials[eliteIndex]));
@@ -83,10 +87,9 @@ public class Game {
         // Add items here! Look at GameDemo.java for examples
         gui.updateInventory(inventory);
         
-        // TODO: Customize button labels
         String[] buttons = {"Attack (" + playerDamage + ")", 
                             "Defend (" + playerShield + ")", 
-                            "Heal (" + playerHeal +")", 
+                            "Special (" + playerSpecialMeter + "/" + playerSpecialMax + ")",
                             "Use Item"};
         gui.setActionButtons(buttons);
         
@@ -106,20 +109,22 @@ public class Game {
         while (countLivingMonsters() > 0 && playerHealth > 0) {
             
             // PLAYER'S TURN
-            if (playerStatus != null && !(playerStatus.equals("Immobilized") && Math.random() < 0.3)) {
+            if (playerStatus != null && playerStatus.equals("Immobilized") && Math.random() < 0.3) {
+                gui.displayMessage(monsters.get(0).name() + " immobilizes you! You cannot move!");
+                gui.pause(1500);
+            } else {
                 gui.displayMessage("Your turn! HP: " + playerHealth);
                 int action = gui.waitForAction();  // Wait for button click (0-3)
                 handlePlayerAction(action);
                 gui.updateMonsters(monsters);
                 gui.pause(500);
-            } else {
-                gui.displayMessage(monsters.get(0).name() + " immobilizes you! You cannot move!");
-                gui.pause(1500);
             }
 
             if (playerStatus != null && playerStatus.equals("Bleeding")) {
                 heal(-0.05); // "heal" negative percentage points
-                gui.displayMessage("You are bleeding! you took"); 
+                gui.updatePlayerHealth(playerHealth);
+                gui.displayMessage("You are bleeding! you took " + (int)(0.05 * playerMaxHealth)  + " damage!");
+                gui.pause(300); 
             }
             
             // MONSTER'S TURN (if any alive and player alive)
@@ -218,6 +223,8 @@ public class Game {
         playerShield = 50;
         playerHeal = 50;
         playerSpeed = 10;
+        playerSpecialMeter = 0;
+        playerSpecialMax = 10;
         
         // Customize stats based on character choice
         if (choice == 0) {
@@ -241,7 +248,7 @@ public class Game {
             // Ninja: high speed, low healing and health
             gui.displayMessage("You chose Dolphin Rider! Quick and to the point.");
             playerHeal -= (int)(Math.random() * 21) + 5;        // Reduce heal by 5-25
-            playerHealth -= (int)(Math.random() * 21) + 5;      // Reduce max health by 5-25
+            playerMaxHealth -= (int)(Math.random() * 21) + 5;      // Reduce max health by 5-25
             playerSpeed = (int)(Math.random() * 4) + 8;         // Set speed to a range of 7-11
         }
         
@@ -311,14 +318,6 @@ public class Game {
         item.use();  // The item knows what to do!
     }
     
-    /**
-     * Monster attacks player
-     * 
-     * TODO: Customize how monsters attack!
-     * - How much damage?
-     * - Which monster attacks?
-     * - Special abilities?
-     */
     private void monsterAttack() {
         // Create new ArrayList of monsters that will attack the player
         ArrayList<Monster> attackers = getSpeedyMonsters();
@@ -328,20 +327,7 @@ public class Game {
 
             int damageTaken = (int)(Math.random() * monster.damage() + 1);
 
-            // MANAGE SHIELD
-            if (shieldPoints > 0) {
-                double absorbance = Math.min(damageTaken, shieldPoints);
-                damageTaken -= absorbance;
-                shieldPoints -= absorbance;
-                gui.displayMessage("You block for " + absorbance + " damage. You have " + shieldPoints + " shield left.");
-            }
-
-            if (damageTaken > 0) {
-                playerHealth -= damageTaken;
-                gui.displayMessage(monster.name() + " hits you for " + damageTaken + " damage!");
-                gui.updatePlayerHealth(playerHealth);
-            }
-
+            // MANAGE SPECIALS
             if (monster.special().equals("Immobilizer") && playerStatus != "Immobilized" && damageTaken > 0) {
                 playerStatus = "Immobilized";
                 gui.displayMessage(monster.name() + " immobilizes you! 30% chance for actions to fail!");
@@ -356,6 +342,20 @@ public class Game {
                 playerStatus = "Bleeding";
                 gui.displayMessage(monster.name() + " cuts you deeply! You will take 5% of your max health every turn!");
                 gui.pause(500);
+            }
+
+            // MANAGE SHIELD
+            if (shieldPoints > 0) {
+                double absorbance = Math.min(damageTaken, shieldPoints);
+                damageTaken -= absorbance;
+                shieldPoints -= absorbance;
+                gui.displayMessage("You block for " + absorbance + " damage. You have " + shieldPoints + " shield left.");
+            }
+
+            if (damageTaken > 0) {
+                playerHealth -= damageTaken;
+                gui.displayMessage(monster.name() + " hits you for " + damageTaken + " damage!");
+                gui.updatePlayerHealth(playerHealth);
             }
             
             int index = monsters.indexOf(monster);
@@ -430,12 +430,15 @@ public class Game {
         return result;
     }
 
+    public int playerMaxHealth() { return playerMaxHealth; }
+
     public void heal(int amountHealed) {
-        playerHealth = Math.max(playerMaxHealth, playerHealth + amountHealed);
+        playerHealth = Math.min(playerMaxHealth, playerHealth + amountHealed);
     }
 
     public void heal(double percent) {
         int amountHealed = (int)(percent * playerMaxHealth);
-        playerHealth = Math.max(playerMaxHealth, playerHealth + amountHealed);
+        playerHealth = Math.min(playerMaxHealth, playerHealth + amountHealed);
+
     }
 }
