@@ -119,7 +119,7 @@ public class Game {
 
             if (playerStatus != null && playerStatus.equals("Bleeding")) {
                 heal(-0.05); // "heal" negative percentage points
-                gui.displayMessage("You are bleeding! you took"); 
+                gui.displayMessage("You are bleeding! you lost 5% of your max health!"); 
             }
             
             // MONSTER'S TURN (if any alive and player alive)
