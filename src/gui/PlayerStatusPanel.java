@@ -11,7 +11,9 @@ public class PlayerStatusPanel extends JPanel {
     
     private int currentHealth;
     private int maxHealth;
+    private int speed;
     private JLabel healthLabel;
+    private JLabel speedLabel;
     private HealthBar healthBar;
     
     // Visual constants
@@ -22,6 +24,7 @@ public class PlayerStatusPanel extends JPanel {
     private static final Color HEALTH_BAR_LOW = new Color(220, 20, 60);
     private static final Font TITLE_FONT = new Font("Arial", Font.BOLD, 16);
     private static final Font HEALTH_FONT = new Font("Arial", Font.BOLD, 20);
+    private static final Font SPEED_FONT = new Font("Arial", Font.BOLD, 14);
     private static final int BAR_HEIGHT = 30;
     
     /**
@@ -38,6 +41,7 @@ public class PlayerStatusPanel extends JPanel {
     public PlayerStatusPanel(int maxHealth) {
         this.maxHealth = maxHealth;
         this.currentHealth = maxHealth;
+        this.speed = 10; // Default speed
         
         setLayout(new BorderLayout(10, 10));
         setBackground(PANEL_BG);
@@ -61,12 +65,26 @@ public class PlayerStatusPanel extends JPanel {
         titleLabel.setFont(TITLE_FONT);
         titleLabel.setForeground(Color.CYAN);
         
+        // Right side: health and speed
+        JPanel statsPanel = new JPanel();
+        statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.Y_AXIS));
+        statsPanel.setOpaque(false);
+        
         healthLabel = new JLabel(currentHealth + " / " + maxHealth + " HP", SwingConstants.RIGHT);
         healthLabel.setFont(HEALTH_FONT);
         healthLabel.setForeground(Color.WHITE);
+        healthLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        
+        speedLabel = new JLabel("SPD: " + speed, SwingConstants.RIGHT);
+        speedLabel.setFont(SPEED_FONT);
+        speedLabel.setForeground(Color.CYAN);
+        speedLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        
+        statsPanel.add(healthLabel);
+        statsPanel.add(speedLabel);
         
         titlePanel.add(titleLabel, BorderLayout.WEST);
-        titlePanel.add(healthLabel, BorderLayout.EAST);
+        titlePanel.add(statsPanel, BorderLayout.EAST);
         
         // Health bar
         healthBar = new HealthBar();
@@ -107,6 +125,15 @@ public class PlayerStatusPanel extends JPanel {
     }
     
     /**
+     * Set the player's speed
+     * @param speed The speed value
+     */
+    public void setSpeed(int speed) {
+        this.speed = speed;
+        speedLabel.setText("SPD: " + speed);
+    }
+    
+    /**
      * Get current health
      * @return The current health value
      */
@@ -120,6 +147,14 @@ public class PlayerStatusPanel extends JPanel {
      */
     public int getMaxHealth() {
         return maxHealth;
+    }
+    
+    /**
+     * Get player speed
+     * @return The speed value
+     */
+    public int getSpeed() {
+        return speed;
     }
     
     /**
