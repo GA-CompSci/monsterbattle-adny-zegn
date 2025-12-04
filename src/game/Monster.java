@@ -8,7 +8,7 @@ public class Monster {
     private String name;
     private String special;
 
-    private String[] adjectives = {"Evil ", "Devious ", "Killer ", "Giant ", "Angry ", "Ferocious ", "Malevolent ", "Wicked ", "Cruel ", "Vicious ", "Dark "};
+    private String[] adjectives = {"Evil ", "Devious ", "Killer ", "Giant ", "Angry ", "Ferocious ", "Malevolent ", "Wicked ", "Cruel ", "Vicious ", "Abyssal "};
     private String[] species = {"Starfish", "Clam", "Jellyfish ", "Sea Pickle ", "Kelp", "Coral", "Sea Urchin", "Shrimp", "Eel", "Octopus", "Crab", "Stingray", "Nautilus"};
 
     // CONSTRUCTOR
@@ -37,7 +37,7 @@ public class Monster {
         } 
         else if (special.equals("Colossus")) {
             name = "Great Whale";
-            maxHealth = 250;
+            maxHealth = 250; // THE WALL
             speed = -1; // Only retaliates
             damage = 10;
         }

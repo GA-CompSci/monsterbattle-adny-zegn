@@ -35,12 +35,7 @@ public class Game {
     private int characterClass;
     private double shieldPoints;
     private String playerStatus = "Normal";
-
-
-    private String[] actionButtons = {"Attack (" + playerDamage + ")", 
-                                      "Defend (" + playerShield + ")", 
-                                      "Special (" + playerSpecialMeter + "/" + playerSpecialMax + ")",
-                                      "Use Item"};
+    private boolean hasUsedItem = false;
 
     /**
      * Main method - start YOUR game!
@@ -67,9 +62,11 @@ public class Game {
         // Create the GUI
         gui = new MonsterBattleGUI("Monster Battle - ANDY'S GAME");
 
-        String[] specials = {"Immobilizer",
-                             "Colossus",
-                             "Predator"};
+        String[] specials = 
+        { "Immobilizer",
+          "Colossus",
+          "Predator"
+        };
 
         // CHOOSE DIFFICULTY 
         int numMonsters = chooseDifficulty();
@@ -91,6 +88,10 @@ public class Game {
         // TODO: Create starting items
         inventory = new ArrayList<>();
         // Add items here! Look at GameDemo.java for examples
+        createTonic(100);
+        createTonic(100);
+        createTonic(100);
+        createTonic(100);
         gui.updateInventory(inventory);
         
         // Welcome message
@@ -108,9 +109,10 @@ public class Game {
         
         while (countLivingMonsters() > 0 && playerHealth > 0) {
             //RESET ACTION BUTTONS
-            gui.setActionButtons(actionButtons);
+            resetActionButtons();
 
             // PLAYER'S TURN
+            hasUsedItem = false;
             if (playerStatus != null && playerStatus.equals("Immobilized") && Math.random() < 0.3) {
                 gui.displayMessage(monsters.get(0).name() + " immobilizes you! You cannot move!");
                 gui.pause(1500);
@@ -122,6 +124,7 @@ public class Game {
                 gui.pause(500);
             }
 
+            // BLEED - SOAKS THROUGH SHIELD 
             if (playerStatus != null && playerStatus.equals("Bleeding")) {
                 heal(-0.05); // "heal" negative percentage points
                 gui.updatePlayerHealth(playerHealth);
@@ -225,7 +228,7 @@ public class Game {
         playerDamage = 50;
         playerShield = 50;
         playerSpeed = 10;
-        playerSpecialMeter = 0;
+        playerSpecialMeter = 100;
         playerSpecialMax = 10;
         
         // Customize stats based on character choice
@@ -248,7 +251,7 @@ public class Game {
         } else {
             // Ninja: high speed, low healing and health
             gui.displayMessage("You chose Dolphin Rider! Quick and to the point.");
-            playerMaxHealth -= (int)(Math.random() * 21) + 5;      // Reduce max health by 5-25
+            playerMaxHealth -= (int)(Math.random() * 21) + 5;   // Reduce max health by 5-25
             playerSpeed = (int)(Math.random() * 4) + 8;         // Set speed to a range of 7-11
         }
         
@@ -286,7 +289,24 @@ public class Game {
         gui.highlightMonster(-1);
         gui.updateMonsters(monsters);
     }
-    
+
+    /**
+     * Attack with a certain amount of damage
+     * Must be above 0
+     */
+    private void attackMonster(int damage) {
+        Monster target = getFirstLivingMonster();
+        lastHit = target;
+        target.takeDamage(damage);
+
+        // Show which one we hit
+        int index = monsters.indexOf(target);
+        gui.highlightMonster(index);
+        gui.pause(300);
+        gui.highlightMonster(-1);
+        gui.updateMonsters(monsters);
+    }
+
     /**
      * Put up a shield that reduces damage
      */
@@ -305,6 +325,15 @@ public class Game {
             switch (characterClass) {
                 case (0): // Fish Slapper
                     gui.displayMessage("Tri-slap! ");
+                    gui.pause(500);
+                    gui.displayMessage("SLAP!");
+                    attackMonster((int)(playerDamage * 0.60));
+                    gui.displayMessage("SLAP!");
+                    attackMonster((int)(playerDamage * 0.80));
+                    gui.displayMessage("SLAP!");
+                    attackMonster((int)(playerDamage));
+                    break;
+                case (1): // Turtle Master 
             }
         }
     }
@@ -318,10 +347,29 @@ public class Game {
             return;
         }
         
-        // Use first item
-        Item item = inventory.remove(0);
+        if (hasUsedItem) {
+            gui.displayMessage("Only one item a turn!");
+            return;
+        }
+
+        // DISPLAY ITEMS IN INVENTORY - ALLOW PLAYER CHOICE
+        String[] items = new String[4];
+        for (int i = 0; i < 4; i++) {
+            if (i < inventory.size()) items[i] = inventory.get(i).getName();
+            else items[i] = "Empty";
+        }
+
+        
+        gui.setActionButtons(items);
+        int selection = gui.waitForAction();
+        while (selection >= inventory.size()) {
+            gui.setActionButtons(items);
+            selection = gui.waitForAction();
+        }
+        Item item = inventory.remove(selection);
         gui.updateInventory(inventory);
         item.use();  // The item knows what to do!
+        hasUsedItem = true;
     }
     
     private void monsterAttack() {
@@ -448,4 +496,31 @@ public class Game {
         playerHealth = Math.min(playerMaxHealth, playerHealth + amountHealed);
 
     }
+
+    public void resetActionButtons() {
+        String[] actionButtons = 
+        { "Attack (" + playerDamage + ")", 
+          "Defend (" + playerShield + ")", 
+          "Special (" + playerSpecialMeter + "/" + playerSpecialMax + ")",
+          "Use Item"
+        };
+        gui.setActionButtons(actionButtons);
+    }
+
+    public void manageSpecialMeter(int increase) {
+        playerSpecialMeter = Math.min(playerSpecialMax, playerSpecialMeter + increase);
+    }
+
+    // =========== ITEMS ============
+    public void createTonic(int healAmount) {
+        inventory.add(new Item("Tonic", "^", () -> {
+            int trueHeal = Math.min(healAmount, playerMaxHealth - playerHealth);
+            playerHealth += trueHeal;
+            playerStatus = "Normal";
+            gui.updatePlayerHealth(playerHealth);
+            gui.displayMessage("Healed " + trueHeal + " hp! All status ailments cleared!");
+        }));
+    }
+
+
 }
