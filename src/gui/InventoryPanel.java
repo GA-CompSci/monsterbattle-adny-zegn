@@ -110,11 +110,6 @@ public class InventoryPanel extends JPanel {
         ));
         panel.setMaximumSize(new Dimension(PANEL_WIDTH - 20, 50));
         
-        // Item icon from the Item object
-        JLabel iconLabel = new JLabel(item.getIcon());
-        iconLabel.setFont(new Font("Serif", Font.PLAIN, 24));
-        panel.add(iconLabel, BorderLayout.WEST);
-        
         // Item name
         JLabel nameLabel = new JLabel(item.getName());
         nameLabel.setFont(ITEM_FONT);

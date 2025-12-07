@@ -310,7 +310,7 @@ public class GameDemo {
      * Add a health potion to inventory
      */
     private void addHealthPotion(int healAmount) {
-        inventory.add(new Item("Health Potion", "🧪", () -> {
+        inventory.add(new Item("Health Potion", () -> {
             playerHealth = Math.min(maxHealth, playerHealth + healAmount);
             gui.updatePlayerHealth(playerHealth);
             gui.displayMessage("💚 Used Health Potion! Healed " + healAmount + " HP!");
@@ -321,7 +321,7 @@ public class GameDemo {
      * Add a bomb to inventory (damages all monsters)
      */
     private void addBomb(int damage) {
-        inventory.add(new Item("Bomb", "💣", () -> {
+        inventory.add(new Item("Bomb", () -> {
             for (Monster m : monsters) {
                 if (m.health() > 0) {
                     m.takeDamage(damage);

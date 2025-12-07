@@ -131,20 +131,23 @@ public class MonsterDisplayPanel extends JPanel {
             
             // Monster number/name
             JLabel numberLabel = new JLabel(monster.name());
-            numberLabel.setFont(new Font("Arial", Font.BOLD, 14));
+            numberLabel.setFont(new Font("Arial", Font.BOLD, 12));
             numberLabel.setForeground(Color.WHITE);
             numberLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             
             // Stats
             JLabel healthLabel = new JLabel("HP: " + monster.health());
+            healthLabel.setFont(new Font("Arial", Font.PLAIN, 10));
             healthLabel.setForeground(Color.WHITE);
             healthLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             
             JLabel damageLabel = new JLabel("DMG: " + monster.damage());
+            damageLabel.setFont(new Font("Arial", Font.PLAIN, 10));
             damageLabel.setForeground(Color.ORANGE);
             damageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             
             JLabel speedLabel = new JLabel("SPD: " + monster.speed());
+            speedLabel.setFont(new Font("Arial", Font.PLAIN, 10));
             speedLabel.setForeground(Color.CYAN);
             speedLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             
@@ -152,7 +155,7 @@ public class MonsterDisplayPanel extends JPanel {
             if (!monster.special().isEmpty()) {
                 JLabel specialLabel = new JLabel("★ " + monster.special());
                 specialLabel.setForeground(new Color(255, 215, 0));
-                specialLabel.setFont(new Font("Arial", Font.ITALIC, 11));
+                specialLabel.setFont(new Font("Arial", Font.ITALIC, 10));
                 specialLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
                 infoPanel.add(specialLabel);
             }

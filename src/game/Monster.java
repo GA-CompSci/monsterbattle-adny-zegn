@@ -14,9 +14,9 @@ public class Monster {
     // CONSTRUCTOR
     public Monster() {
         // randomly generate health, damage, speed
-        maxHealth = (int)(Math.random() * 80 + 1) + 20;
-        // random 5 - 25
-        damage = (int)(Math.random() * 21) + 5;
+        maxHealth = (int)(Math.random() * 61) + 20;
+        // random 10 - 30
+        damage = (int)(Math.random() * 21) + 10;
         // speed: random 1-10
         speed = (int)(Math.random() * 10) + 1;
         // by default, the monster doesn't have a special move
@@ -32,14 +32,14 @@ public class Monster {
         if (special.equals("Immobilizer")) {
             name = "Kraken";
             maxHealth = 100;
-            speed = 5;
+            speed = 7;
             damage = 25;
         } 
         else if (special.equals("Colossus")) {
             name = "Great Whale";
             maxHealth = 250; // THE WALL
             speed = -1; // Only retaliates
-            damage = 10;
+            damage = 25;
         }
         else if (special.equals("Predator")) {
             name = "Hammerhead Shark";
@@ -61,6 +61,22 @@ public class Monster {
     // MUTATOR METHODS
     public void takeDamage(int dmg) {
         health = Math.max(0, health - dmg);
+    }
+
+    /**
+     * Lowers monster's damage by a certain amount, but not below 5.
+     * @param debuff the amount to lower by
+     */
+    public void weakenDamage(int debuff) {
+        damage = Math.max(damage - debuff, 5);
+    }
+
+    /**
+     * Lowers speed by a certain amount
+     * @param debuff the amount to lower by
+     */
+    public void lowerSpeed(int debuff) {
+        speed -= debuff;
     }
 
     /**

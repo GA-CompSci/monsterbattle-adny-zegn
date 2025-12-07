@@ -17,7 +17,6 @@ package game;
  public class Item {
     
     private String name;
-    private String icon;
     private Runnable onUse;  // The function to call when item is used
     
     /**
@@ -26,9 +25,8 @@ package game;
      * @param icon The emoji/symbol to display (e.g., "🧪", "💣", "⚔️")
      * @param onUse The code to run when this item is used
      */
-    public Item(String name, String icon, Runnable onUse) {
+    public Item(String name, Runnable onUse) {
         this.name = name;
-        this.icon = icon;
         this.onUse = onUse;
     }
     
@@ -40,13 +38,6 @@ package game;
         return name;
     }
     
-    /**
-     * Get the item's display icon
-     * @return The icon
-     */
-    public String getIcon() {
-        return icon;
-    }
     
     /**
      * Use this item (executes the onUse function)

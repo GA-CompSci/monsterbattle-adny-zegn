@@ -23,8 +23,10 @@ public class Game {
 
     // Game state - YOU manage these
     private ArrayList<Monster> monsters;
-    private Monster lastHit; // The monster we last attacked - retaliates if not dead
+    private int elitePosition;
     private ArrayList<Item> inventory;
+
+    // PLAYER ATTRIBUTES
     private int playerHealth;
     private int playerMaxHealth;
     private int playerShield;
@@ -34,8 +36,11 @@ public class Game {
     private int playerSpecialMax;
     private int characterClass;
     private double shieldPoints;
+
     private String playerStatus = "Normal";
+
     private boolean hasUsedItem = false;
+    private boolean playerTurn = false;
 
     /**
      * Main method - start YOUR game!
@@ -55,12 +60,10 @@ public class Game {
     
     /**
      * Setup - create the GUI and initial game state
-     * 
-     * TODO: Customize this! How many monsters? What items? How much health?
      */
     private void setupGame() {
         // Create the GUI
-        gui = new MonsterBattleGUI("Monster Battle - ANDY'S GAME");
+        gui = new MonsterBattleGUI("Monster Battle - UNDER THE SEA");
 
         String[] specials = 
         { "Immobilizer",
@@ -70,7 +73,7 @@ public class Game {
 
         // CHOOSE DIFFICULTY 
         int numMonsters = chooseDifficulty();
-        int elitePosition = (int)(Math.random() * numMonsters); // Randomly generate the position our elite will be
+        elitePosition = (int)(Math.random() * numMonsters); // Randomly generate the position our elite will be
         monsters = new ArrayList<>();
         for (int i = 0; i < numMonsters; i++) {
             if (i == elitePosition) {
@@ -85,13 +88,12 @@ public class Game {
         
         pickCharacterBuild();
 
-        // TODO: Create starting items
         inventory = new ArrayList<>();
         // Add items here! Look at GameDemo.java for examples
-        createTonic(100);
-        createTonic(100);
-        createTonic(100);
-        createTonic(100);
+        createTonic(50);
+        createBomb(20);
+        createAdrenaline(5, 1);
+        createPocketSand(5, 1);
         gui.updateInventory(inventory);
         
         // Welcome message
@@ -108,32 +110,39 @@ public class Game {
         // Keep playing while monsters alive and player alive
         
         while (countLivingMonsters() > 0 && playerHealth > 0) {
-            //RESET ACTION BUTTONS
+            // RESET BUTTONS AND MONSTERTURN
             resetActionButtons();
 
-            // PLAYER'S TURN
-            hasUsedItem = false;
-            if (playerStatus != null && playerStatus.equals("Immobilized") && Math.random() < 0.3) {
-                gui.displayMessage(monsters.get(0).name() + " immobilizes you! You cannot move!");
-                gui.pause(1500);
-            } else {
+            // GAME EVENTS - ONLY HAPPEN ONCE PER TURN
+            if (!playerTurn) {
+                if (playerStatus.equals("Immobilized") && Math.random() < 0.3) {
+                    gui.displayMessage(monsters.get(elitePosition).name() + " immobilizes you! You cannot move!");
+                    hasUsedItem = false;
+                    playerTurn = false;
+                    gui.pause(1500);
+                } else  {
+                    playerTurn = true;
+                    incrementSpecialMeter(characterClass);
+                }
+                if (playerStatus != null && playerStatus.equals("Bleeding")) {
+                    heal(-0.05); // "heal" negative percentage points
+                    gui.updatePlayerHealth(playerHealth);
+                    gui.displayMessage("You are bleeding! you took " + (int)(0.05 * playerMaxHealth)  + " damage!");
+                    gui.pause(300); 
+                }
+            }
+
+            // PLAYER TURN
+            if (playerTurn) {
                 gui.displayMessage("Your turn! HP: " + playerHealth);
                 int action = gui.waitForAction();  // Wait for button click (0-3)
                 handlePlayerAction(action);
                 gui.updateMonsters(monsters);
                 gui.pause(500);
             }
-
-            // BLEED - SOAKS THROUGH SHIELD 
-            if (playerStatus != null && playerStatus.equals("Bleeding")) {
-                heal(-0.05); // "heal" negative percentage points
-                gui.updatePlayerHealth(playerHealth);
-                gui.displayMessage("You are bleeding! you took " + (int)(0.05 * playerMaxHealth)  + " damage!");
-                gui.pause(300); 
-            }
             
             // MONSTER'S TURN (if any alive and player alive)
-            if (countLivingMonsters() > 0 && playerHealth > 0) {
+            if (!playerTurn && countLivingMonsters() > 0 && playerHealth > 0) {
                 monsterAttack();
                 gui.updateMonsters(monsters);
                 gui.pause(500);
@@ -202,7 +211,8 @@ public class Game {
                 special();
                 break;
             case 3: // Use Item button
-                useItem();
+                if (!hasUsedItem) useItem();
+                else gui.displayMessage("Only 1 item per turn!");
                 break;
         }
     }
@@ -228,36 +238,40 @@ public class Game {
         playerDamage = 50;
         playerShield = 50;
         playerSpeed = 10;
-        playerSpecialMeter = 100;
-        playerSpecialMax = 10;
+        playerSpecialMeter = 0;
+        playerSpecialMax = 8;
         
         // Customize stats based on character choice
         if (characterClass == 0) {
-            // Fighter: high damage, low healing and shield
+            // Fish Slapper: high damage, low shield
             gui.displayMessage("You chose Fish Slapper! Slap 'em up, but be careful...");
-            playerShield -= (int)(Math.random() * 21) + 5;      // Reduce shield by 5-25
-            playerSpeed = (int)(Math.random() * 6) + 5;         // Set speed to a range of 5-10
+            playerShield -= (int)(Math.random() * 11) + 15;     // Reduce shield by 15-25
+            playerSpeed = (int)(Math.random() * 5) + 5;         // Set speed to a range of 4-7
         } else if (characterClass == 1) {
-            // Tank: high shield, low damage and speed
+            // Turtle Master: high shield, low damage and speed, high special cooldown
             gui.displayMessage("You chose Turtle Master! Slow and steady, can you win?");
-            playerSpeed = (int)(Math.random() * 5) + 1;         // Set speed to a range of 1-5
-            playerDamage -= (int)(Math.random() * 21) + 5;      // Reduce damage by 5-25
+            playerMaxHealth += (int)(Math.random() * 11) + 15;  // Increase max health by 15-25 
+            playerSpeed = (int)(Math.random() * 3) + 1;         // Set speed to a range of 1-3
+            playerDamage -= (int)(Math.random() * 11) + 15;     // Reduce damage by 15-25
         } else if (characterClass == 2) {
-            // Healer: high healing, low damage and shield
+            // Algae Eater: high health, low damage, variable speed, high special cooldown
             gui.displayMessage("You chose Algae Eater! Photosynthesize and devour your way to the top!");
-            playerDamage -= (int)(Math.random() * 21) + 5;      // Reduce damage by 5-25
-            playerShield -= (int)(Math.random() * 21) + 5;      // Reduce shield by 5-25
-            playerSpeed = (int)(Math.random() * 5) + 1;         // Set speed to a range of 3-8
+            playerMaxHealth += (int)(Math.random() * 26) + 25;  // Increase max health by 25-50
+            playerDamage -= (int)(Math.random() * 11) + 15;     // Reduce damage by 15-25
+            playerSpeed = (int)(Math.random() * 5) + 4;         // Set speed to a range of 3-6
         } else {
-            // Ninja: high speed, low healing and health
+            // Dolphin Rider: high speed, low health and shield, medium special cooldown
             gui.displayMessage("You chose Dolphin Rider! Quick and to the point.");
-            playerMaxHealth -= (int)(Math.random() * 21) + 5;   // Reduce max health by 5-25
-            playerSpeed = (int)(Math.random() * 4) + 8;         // Set speed to a range of 7-11
+            playerMaxHealth -= (int)(Math.random() * 11) + 25;  // Reduce max health by 25-35
+            playerShield -= (int)(Math.random() * 11) + 15;     // Reduce shield by 15-25
+            playerSpeed = (int)(Math.random() * 5) + 7;         // Set speed to a range of 6-9
         }
         
         // Pause to let player see their choice
+        playerHealth = playerMaxHealth;
         gui.setPlayerMaxHealth(playerMaxHealth);
         gui.updatePlayerHealth(playerMaxHealth);
+        gui.setPlayerSpeed(playerSpeed);
         gui.pause(1500);
     }
    
@@ -265,9 +279,7 @@ public class Game {
      * Attack a monster
      */
     private void attackMonster() {
-
         Monster target = getFirstLivingMonster();
-        lastHit = target;
         int damage = (int)(Math.random() * (playerDamage + 1));
 
         if (damage == 0) {
@@ -288,15 +300,24 @@ public class Game {
         gui.pause(300);
         gui.highlightMonster(-1);
         gui.updateMonsters(monsters);
+
+        // See if we get an item
+        if (inventory.size() < 4 && target.health() <= 0) {
+            createRandomItem();
+            gui.displayMessage("You got a(n) " + inventory.getLast().getName() + "!");
+            gui.pause(500);
+        } 
+        hasUsedItem = false;
+        playerTurn = false;
+        incrementSpecialMeter(1);
     }
 
     /**
-     * Attack with a certain amount of damage
+     * Attack a certain monster with a certain amount of damage
      * Must be above 0
      */
-    private void attackMonster(int damage) {
-        Monster target = getFirstLivingMonster();
-        lastHit = target;
+    private void attackMonster(Monster monster, int damage) {
+        Monster target = monster;
         target.takeDamage(damage);
 
         // Show which one we hit
@@ -305,6 +326,12 @@ public class Game {
         gui.pause(300);
         gui.highlightMonster(-1);
         gui.updateMonsters(monsters);
+
+        if (inventory.size() < 4 && monster.health() <= 0) {
+            createRandomItem();
+            gui.displayMessage("You got a(n) " + inventory.getLast().getName() + "!");
+            gui.pause(500);
+        }
     }
 
     /**
@@ -313,28 +340,51 @@ public class Game {
     private void defend() {
         shieldPoints = playerShield;
         gui.displayMessage("Shield Up! Ready or not...");
+        hasUsedItem = false;
+        playerTurn = false;
     }
     
     /**
      * Use special, if possible
      */
-    
-    //TODO: specials
     private void special() {
         if (playerSpecialMeter >= playerSpecialMax) {
             switch (characterClass) {
-                case (0): // Fish Slapper
-                    gui.displayMessage("Tri-slap! ");
+                case (0): // Fish Slapper - Tri-Slap
+                    gui.displayMessage("Tri-slap!");
                     gui.pause(500);
                     gui.displayMessage("SLAP!");
-                    attackMonster((int)(playerDamage * 0.60));
+                    attackMonster(getFirstLivingMonster(), (int)(playerDamage * 0.60));
+                    gui.displayMessage( "SLAP!");
+                    attackMonster(getFirstLivingMonster(), (int)(playerDamage * 0.80));
                     gui.displayMessage("SLAP!");
-                    attackMonster((int)(playerDamage * 0.80));
-                    gui.displayMessage("SLAP!");
-                    attackMonster((int)(playerDamage));
+                    attackMonster(getFirstLivingMonster(), (int)(playerDamage));
                     break;
-                case (1): // Turtle Master 
+                case (1): // Turtle Master - Shell Spikes
+                    gui.displayMessage("Shell Spikes!");
+                    playerStatus = "Shelled";
+                    shieldPoints = 100;
+                    break;
+                case (2): // Algae Eater - Overgrow
+                    gui.displayMessage("Overgrow!");
+                    playerHealth = playerMaxHealth;
+                    gui.updatePlayerHealth(playerHealth);
+                    gui.pause(300);
+                    gui.displayMessage("Status ailments cleared!");
+                    playerStatus = "Normal";
+                    break;
+                default: // Dolphin Rider - Accelerate
+                    gui.displayMessage("Accelerate!");
+                    gui.pause(300);
+                    playerSpeed++;
+                    gui.displayMessage("Speed UP!");
+                    gui.setPlayerSpeed(playerSpeed);
+                    gui.pause(300);
+                    playerDamage += 10;
+                    gui.displayMessage("Damage UP!");
             }
+            playerSpecialMeter = 0;
+            hasUsedItem = false;
         }
     }
     
@@ -346,11 +396,6 @@ public class Game {
             gui.displayMessage("No items in inventory!");
             return;
         }
-        
-        if (hasUsedItem) {
-            gui.displayMessage("Only one item a turn!");
-            return;
-        }
 
         // DISPLAY ITEMS IN INVENTORY - ALLOW PLAYER CHOICE
         String[] items = new String[4];
@@ -359,7 +404,6 @@ public class Game {
             else items[i] = "Empty";
         }
 
-        
         gui.setActionButtons(items);
         int selection = gui.waitForAction();
         while (selection >= inventory.size()) {
@@ -375,28 +419,11 @@ public class Game {
     private void monsterAttack() {
         // Create new ArrayList of monsters that will attack the player
         ArrayList<Monster> attackers = getSpeedyMonsters();
-        if (lastHit != null && lastHit.health() > 0 && !attackers.contains(lastHit)) attackers.add(lastHit);
+        attackers.add(getFirstLivingMonster());
 
         for (Monster monster : attackers) {
 
             int damageTaken = (int)(Math.random() * monster.damage() + 1);
-
-            // MANAGE SPECIALS
-            if (monster.special().equals("Immobilizer") && playerStatus != "Immobilized" && damageTaken > 0) {
-                playerStatus = "Immobilized";
-                gui.displayMessage(monster.name() + " immobilizes you! 30% chance for actions to fail!");
-                gui.pause(1000);
-            } else if (monster.special().equals("Colossus")) {
-                if (Math.random() < 0.3) {
-                    gui.displayMessage(monster.name() + " heals itself for 5% of its health!");
-                    monster.heal(0.05);
-                    gui.pause(500);
-                }
-            } else if (monster.special().equals("Predator") && playerStatus != "Bleeding" && damageTaken > 0) {
-                playerStatus = "Bleeding";
-                gui.displayMessage(monster.name() + " cuts you deeply! You will take 5% of your max health every turn!");
-                gui.pause(500);
-            }
 
             // MANAGE SHIELD
             if (shieldPoints > 0) {
@@ -404,7 +431,10 @@ public class Game {
                 damageTaken -= absorbance;
                 shieldPoints -= absorbance;
                 gui.displayMessage("You block for " + absorbance + " damage. You have " + shieldPoints + " shield left.");
-                shieldPoints = 0;
+                if (playerStatus.equals("Shelled")) {
+                    gui.displayMessage(monster.name() + " suffers thorns damage!");
+                    attackMonster(monster, (int)(Math.random() * playerDamage * 0.4) + 5);
+                }
             }
 
             if (damageTaken > 0) {
@@ -412,12 +442,27 @@ public class Game {
                 gui.displayMessage(monster.name() + " hits you for " + damageTaken + " damage!");
                 gui.updatePlayerHealth(playerHealth);
             }
-            
+
             int index = monsters.indexOf(monster);
             gui.highlightMonster(index);
+            // MANAGE MONSTER SPECIALS
+            if (monster.special().equals("Immobilizer") && playerStatus != "Immobilized" && damageTaken > 0) {
+                playerStatus = "Immobilized";
+                gui.displayMessage(monster.name() + " ensnares you! 30% chance for actions to fail!");
+            } else if (monster.special().equals("Colossus")) {
+                if (Math.random() < 0.3) {
+                    gui.displayMessage(monster.name() + " heals itself for 5% of its health!");
+                    monster.heal(0.05);
+                }
+            } else if (monster.special().equals("Predator") && playerStatus != "Bleeding" && damageTaken > 0) {
+                playerStatus = "Bleeding";
+                gui.displayMessage(monster.name() + " cuts you deeply! You will take 5% of your max health every turn!");
+            }
             gui.pause(300);
             gui.highlightMonster(-1);
         }
+        if (playerStatus.equals("Shelled")) playerStatus = "Normal";
+        shieldPoints = 0;
     }
     
     // ==================== HELPER METHODS ====================
@@ -447,7 +492,6 @@ public class Game {
     }
 
     /**
-     * 
      * @return The first monster still living.
      */
     private Monster getFirstLivingMonster() {
@@ -485,8 +529,6 @@ public class Game {
         return result;
     }
 
-    public int playerMaxHealth() { return playerMaxHealth; }
-
     public void heal(int amountHealed) {
         playerHealth = Math.min(playerMaxHealth, playerHealth + amountHealed);
     }
@@ -507,13 +549,16 @@ public class Game {
         gui.setActionButtons(actionButtons);
     }
 
-    public void manageSpecialMeter(int increase) {
+    public void incrementSpecialMeter(int increase) {
         playerSpecialMeter = Math.min(playerSpecialMax, playerSpecialMeter + increase);
+        if (playerSpecialMeter == playerSpecialMax) gui.displayMessage("Special meter at MAX!");
+        else gui.displayMessage("Special meter UP!");
+        gui.pause(300);
     }
 
     // =========== ITEMS ============
     public void createTonic(int healAmount) {
-        inventory.add(new Item("Tonic", "^", () -> {
+        inventory.add(new Item("Tonic", () -> {
             int trueHeal = Math.min(healAmount, playerMaxHealth - playerHealth);
             playerHealth += trueHeal;
             playerStatus = "Normal";
@@ -522,5 +567,62 @@ public class Game {
         }));
     }
 
+    public void createBomb(int damage) { // A bomb? Underwater? Don't question it.
+        inventory.add(new Item("Bomb", () -> {
+            gui.displayMessage("BOOM!");
+            gui.pause(200);
+            for (Monster monster : monsters) {
+                if (monster.health() > 0) {
+                    gui.displayMessage(monster.name() + " takes " + damage + " damage!");
+                    gui.pause(100);
+                    attackMonster(monster, damage);
+                }
+            }
+        }));
+    }
 
+    public void createAdrenaline(int statBoost, int specialBoost) {
+        inventory.add(new Item("Adrenaline", () -> {
+            playerDamage += statBoost;
+            gui.displayMessage("Damage increased by " + statBoost + "!");
+            gui.pause(300);
+            playerShield += statBoost;
+            gui.displayMessage("Shield increased by " + statBoost + "!");
+            gui.pause(300);
+            incrementSpecialMeter(specialBoost);
+            gui.displayMessage("Special meter increased by " + specialBoost + "!");
+            gui.pause(300);
+        }));
+    }
+
+    public void createPocketSand(int debuff, int slowdown) { // Don't question why the pocket sand hits every monster, either.
+        inventory.add(new Item("Pocket Sand", () -> {
+            gui.displayMessage("All monsters weakened and slowed!");
+            for (Monster monster : monsters) {
+                if (monster.health() > 0 ) {
+                    monster.weakenDamage(debuff);
+                    monster.lowerSpeed(slowdown);
+                }
+            }
+            gui.updateMonsters(monsters);
+        }));
+    }
+
+    public void createRandomItem() {
+        int index = (int)(Math.random() * 4);
+        switch (index) {
+            case (0): 
+                createTonic(50);
+                break;
+            case (1): 
+                createBomb(20);
+                break;
+            case (2):
+                createAdrenaline(5, 1);
+                break;
+            default:
+                createPocketSand(5, 1);
+        }
+        gui.updateInventory(inventory);
+    }
 }
