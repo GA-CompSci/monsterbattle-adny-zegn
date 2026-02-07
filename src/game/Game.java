@@ -248,19 +248,19 @@ public class Game {
             playerShield -= (int)(Math.random() * 11) + 15;     // Reduce shield by 15-25
             playerSpeed = (int)(Math.random() * 5) + 5;         // Set speed to a range of 4-7
         } else if (characterClass == 1) {
-            // Turtle Master: high shield, low damage and speed, high special cooldown
+            // Turtle Master: high shield, low damage and speed
             gui.displayMessage("You chose Turtle Master! Slow and steady, can you win?");
             playerMaxHealth += (int)(Math.random() * 11) + 15;  // Increase max health by 15-25 
             playerSpeed = (int)(Math.random() * 3) + 1;         // Set speed to a range of 1-3
             playerDamage -= (int)(Math.random() * 11) + 15;     // Reduce damage by 15-25
         } else if (characterClass == 2) {
-            // Algae Eater: high health, low damage, variable speed, high special cooldown
+            // Algae Eater: high health, low damage, variable speed
             gui.displayMessage("You chose Algae Eater! Photosynthesize and devour your way to the top!");
             playerMaxHealth += (int)(Math.random() * 26) + 25;  // Increase max health by 25-50
             playerDamage -= (int)(Math.random() * 11) + 15;     // Reduce damage by 15-25
             playerSpeed = (int)(Math.random() * 5) + 4;         // Set speed to a range of 3-6
         } else {
-            // Dolphin Rider: high speed, low health and shield, medium special cooldown
+            // Dolphin Rider: high speed, low health and shield
             gui.displayMessage("You chose Dolphin Rider! Quick and to the point.");
             playerMaxHealth -= (int)(Math.random() * 11) + 25;  // Reduce max health by 25-35
             playerShield -= (int)(Math.random() * 11) + 15;     // Reduce shield by 15-25
@@ -553,6 +553,7 @@ public class Game {
         playerSpecialMeter = Math.min(playerSpecialMax, playerSpecialMeter + increase);
         if (playerSpecialMeter == playerSpecialMax) gui.displayMessage("Special meter at MAX!");
         else gui.displayMessage("Special meter UP!");
+        resetActionButtons();
         gui.pause(300);
     }
 
